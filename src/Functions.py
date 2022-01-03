@@ -123,6 +123,27 @@ def swap_rows(A,a,b):
     A[a,:] = A[b,:].copy()
     A[b,:] = temp.copy() 
 
+def Jacobi_fast(A,b,x0=np.array([]),tol=1.0e-6,max_iter=1000,LOUD=False):
+    """Solve a Linear system using Jacobi method based on initial guess x0"""
+    [Nrow, Ncol]=A.shape()
+    assert Nrow==Ncol
+    N = Nrow
+    converged=False
+    iteration=1
+    if x0.size==0:
+        x0=np.random.rand(N)
+    x=x0.copy()
+    while not converged:
+        x0=x.copy()
+        x=(b-np.dot(A,x0)+A.diagonal()*x0)/A.diagonal()
+        relative_change=np.linalg.norm(x-x0)/np.linalg.norm(x)
+        if LOUD:
+            print("iteration",iteration, ": Relative Change =", relative_change)
+        if (relative_change<tol) or (iteration >=max_iter):
+            converged=True
+        iteration+=1
+    return x
+
 if __name__=="__main__":
  
     import matplotlib.pyplot as plt
