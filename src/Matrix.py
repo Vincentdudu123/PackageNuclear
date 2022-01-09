@@ -1,5 +1,47 @@
 import numpy as np
 
+from scipy.linalg import lu, inv
+
+def gausselim(A,B):
+    """
+    Solve Ax = B using Gaussian elimination and LU decomposition.
+    A = LU   decompose A into lower and upper triangular matrices
+    LUx = B  substitute into original equation for A
+    Let y = Ux and solve:
+    Ly = B --> y = (L^-1)B  solve for y using "forward" substitution
+    Ux = y --> x = (U^-1)y  solve for x using "backward" substitution
+    :param A: coefficients in Ax = B
+    :type A: numpy.ndarray of size (m, n)
+    :param B: dependent variable in Ax = B
+    :type B: numpy.ndarray of size (m, 1)
+    """
+    # LU decomposition with pivot
+    pl, u = lu(A, permute_l=True)
+    # forward substitution to solve for Ly = B
+    y = np.zeros(B.size)
+    for m, b in enumerate(B.flatten()):
+        y[m] = b
+        # skip for loop if m == 0
+        if m:
+            for n in range(m):
+                y[m] -= y[n] * pl[m,n]
+        y[m] /= pl[m, m]
+
+    # backward substitution to solve for y = Ux
+    x = np.zeros(B.size)
+    lastidx = B.size - 1  # last index
+    for midx in range(B.size):
+        m = B.size - 1 - midx  # backwards index
+        x[m] = y[m]
+        if midx:
+            for nidx in range(midx):
+                n = B.size - 1  - nidx
+                x[m] -= x[n] * u[m,n]
+        x[m] /= u[m, m]
+    return x
+
+
+
 def LU_factor(A,LOUD=True):
     """
     factor L dot U = A, modifies matrix A to be composed of L and U in which the diagonals of L are 1.0
@@ -52,7 +94,7 @@ def LU_solve(A,b,row_order):
     """take the pivoting order"""
     [Nrow, Ncol] = A.shape
     assert Nrow == Ncol    
-    assert b.size++Ncol
+    assert b.size==Ncol
     assert row_order.max()==Ncol-1
     N=Nrow
     # reorder the equations
@@ -90,7 +132,7 @@ def swap_rows(A,a,b):
 
 def Jacobi_fast(A,b,x0=np.array([]),tol=1.0e-6,max_iter=1000,LOUD=False):
     """Solve a Linear system using Jacobi method based on initial guess x0"""
-    [Nrow, Ncol]=A.shape()
+    [Nrow, Ncol]=A.shape
     assert Nrow==Ncol
     N = Nrow
     converged=False
